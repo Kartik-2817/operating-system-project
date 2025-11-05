@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>OS Algo Visualizer – Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  
+  <!-- Google Fonts for better typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    /* Keyframe animations for entrance and hover effects */
+    @keyframes aurora {
+      from { background-position: 0% 50%; }
+      to { background-position: 100% 50%; }
+    }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Universal styles and resets */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 2rem;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      /* --- The beautiful Aurora Background --- */
+      background-color: #111827; /* Fallback color */
+      background-image: radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 1) 0px, transparent 0%), 
+                        radial-gradient(at 97% 21%, hsla(125, 98%, 72%, 1) 0px, transparent 50%),
+                        radial-gradient(at 52% 99%, hsla(355, 98%, 76%, 1) 0px, transparent 50%),
+                        radial-gradient(at 10% 29%, hsla(256, 96%, 68%, 1) 0px, transparent 50%),
+                        radial-gradient(at 97% 96%, hsla(38, 60%, 74%, 1) 0px, transparent 50%),
+                        radial-gradient(at 33% 50%, hsla(222, 67%, 73%, 1) 0px, transparent 50%),
+                        radial-gradient(at 79% 53%, hsla(343, 68%, 79%, 1) 0px, transparent 50%);
+      background-size: 200% 200%;
+      animation: aurora 15s ease infinite;
+    }
+
+    /* --- Glassmorphism Container --- */
+    .container {
+      max-width: 800px;
+      width: 100%;
+      margin: auto;
+      padding: 3rem;
+      border-radius: 20px;
+      text-align: center;
+      
+      background: rgba(17, 24, 39, 0.6); /* Semi-transparent background */
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.125);
+
+      /* Entrance Animation */
+      animation: fadeInUp 0.8s ease-out forwards;
+    }
+
+    /* Heading styles */
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    
+    /* Subtitle for clarity */
+    .subtitle {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1.1rem;
+        margin-bottom: 3rem;
+    }
+
+    /* Navigation grid layout */
+    .nav-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+
+    /* --- Glassmorphism Navigation Links with Glowing Hover --- */
+    .nav-grid a {
+      position: relative; /* Needed for the pseudo-element glow */
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s ease, transform 0.3s ease;
+      
+      /* Staggered entrance animation */
+      opacity: 0;
+      animation: fadeInUp 0.5s ease-out forwards;
+    }
+
+    /* Animation delay for each nav item */
+    .nav-grid a:nth-child(1) { animation-delay: 0.3s; }
+    .nav-grid a:nth-child(2) { animation-delay: 0.4s; }
+    .nav-grid a:nth-child(3) { animation-delay: 0.5s; }
+    .nav-grid a:nth-child(4) { animation-delay: 0.6s; }
+
+    /* The glowing border effect */
+    .nav-grid a::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      background: conic-gradient(from 180deg at 50% 50%, #2563eb, #4f46e5, #ec4899, #f59e0b, #2563eb);
+      opacity: 0;
+      z-index: -1;
+      transition: opacity 0.4s ease;
+    }
+    
+    .nav-grid a:hover {
+      transform: translateY(-5px);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-grid a:hover::before {
+      opacity: 1;
+    }
+
+    /* Icon styles within the links */
+    .nav-grid a i {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+      color: #93c5fd; /* Light blue for icons */
+      transition: color 0.3s ease;
+    }
+
+    .nav-grid a:hover i {
+      color: #ffffff;
+    }
+
+    .nav-grid a span {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    
+    /* Responsive adjustments for smaller screens */
+    @media (max-width: 600px) {
+      body { padding: 1rem; }
+      .nav-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      h1 { font-size: 2.2rem; }
+      .container { padding: 2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>OS Algorithm Visualizer</h1>
+    <p class="subtitle">
+      Explore and understand key Operating System concepts interactively.
+    </p>
+    <nav class="nav-grid">
+      <a href="cpu_scheduling.html">
+        <i class="fa-solid fa-microchip"></i>
+        <span>CPU Scheduling</span>
+      </a>
+      <a href="disk_management.html">
+        <i class="fa-solid fa-hard-drive"></i>
+        <span>Disk Scheduling</span>
+      </a>
+      <a href="memory_management.html">
+        <i class="fa-solid fa-memory"></i>
+        <span>Memory Management</span>
+      </a>
+      <a href="virtual_file_system.html">
+        <i class="fa-solid fa-folder-tree"></i>
+        <span>Virtual File System</span>
+      </a>
+    </nav>
+  </div>
+</body>
+</html>

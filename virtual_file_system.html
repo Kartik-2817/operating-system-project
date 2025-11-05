@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Virtual File System – OS Algo Visualizer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    /* Keyframe animations */
+    @keyframes aurora { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Universal styles and resets */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      color: #e5e7eb;
+      background-color: #111827;
+      background-image: radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 1) 0px, transparent 0%), radial-gradient(at 97% 21%, hsla(125, 98%, 72%, 1) 0px, transparent 50%);
+      background-size: 200% 200%;
+      animation: aurora 15s ease infinite;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* --- Page Layout --- */
+    .page-container { max-width: 800px; width: 100%; margin: auto; }
+    
+    .page-header { text-align: center; margin-bottom: 1.5rem; animation: fadeInUp 0.3s ease-out forwards; }
+    .page-header h1 { font-size: 2rem; color: #fff; margin: 0; }
+    .back-link { display: inline-block; margin-top: 1.5rem; color: #a5b4fc; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+
+    /* --- Terminal Window --- */
+    .terminal-window {
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.125);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      animation: fadeInUp 0.5s ease-out forwards;
+      animation-delay: 0.4s;
+    }
+
+    .terminal-header {
+      background: rgba(0,0,0,0.2);
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .traffic-lights { display: flex; gap: 0.5rem; }
+    .light { width: 12px; height: 12px; border-radius: 50%; }
+    .light.red { background-color: #ff5f56; }
+    .light.yellow { background-color: #ffbd2e; }
+    .light.green { background-color: #27c93f; }
+    .terminal-title { color: #9ca3af; font-size: 0.9rem; margin: 0 auto; }
+
+    #terminal {
+      padding: 1rem;
+      height: 400px;
+      overflow-y: auto;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      cursor: text;
+    }
+
+    .terminal-input-area { display: flex; align-items: center; }
+    #input {
+      flex-grow: 1; background: transparent; border: none; outline: none;
+      color: #fff; font-family: 'Fira Code', monospace; font-size: 0.95rem;
+    }
+
+    /* Terminal content styling */
+    .prompt-user { color: #818cf8; }
+    .prompt-path { color: #a78bfa; }
+    .prompt-symbol { color: #f472b6; }
+    .file { color: #93c5fd; }
+    .dir { color: #a7f3d0; }
+    .error { color: #fca5a5; }
+    .command { color: #e5e7eb; }
+    .help-icon { color: #60a5fa; width: 1.5em; display: inline-block; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <header class="page-header">
+      <h1>Virtual File System</h1>
+      <a href="index.html" class="back-link">← Back to Home</a>
+    </header>
+
+    <div class="terminal-window">
+        <div class="terminal-header">
+            <div class="traffic-lights">
+                <div class="light red"></div>
+                <div class="light yellow"></div>
+                <div class="light green"></div>
+            </div>
+            <div class="terminal-title">user@os:vfs</div>
+        </div>
+        <div id="terminal" onclick="document.getElementById('input').focus()"></div>
+    </div>
+  </div>
+
+<script>
+    const terminal = document.getElementById("terminal");
+    const fs = { name: "/", type: "dir", children: [] };
+    let currentDir = fs;
+    let pathStack = [fs];
+
+    function print(msg = "", type = "") {
+        const line = document.createElement("div");
+        line.innerHTML = type === "error" ? `<span class="error">${msg}</span>` : msg;
+        terminal.insertBefore(line, terminal.lastElementChild);
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function createPrompt() {
+        if (terminal.querySelector('.terminal-input-area')) {
+            terminal.removeChild(terminal.lastElementChild);
+        }
+        const path = pathStack.map(d => d.name === '/' ? '' : d.name).join("/");
+        const promptContainer = document.createElement('div');
+        promptContainer.className = 'terminal-input-area';
+        promptContainer.innerHTML = `
+            <div>
+                <span class="prompt-user">user@os</span>:<span class="prompt-path">~${path || '/'}</span><span class="prompt-symbol">$</span>
+            </div>
+            <input id="input" autocomplete="off" onkeydown="if(event.key==='Enter') runCommand(this)"/>`;
+        terminal.appendChild(promptContainer);
+        terminal.querySelector('#input').focus();
+    }
+    
+    function runCommand(inputElement) {
+        const cmdText = inputElement.value.trim();
+        if (cmdText === "") { createPrompt(); return; }
+        
+        const currentPrompt = inputElement.parentElement.firstElementChild.innerHTML;
+        print(`${currentPrompt} <span class="command">${cmdText}</span>`);
+        
+        const [cmd, ...args] = cmdText.split(" ");
+        executeCommand(cmd, args);
+        createPrompt();
+    }
+
+    function executeCommand(cmd, args) {
+        const findChild = (name) => currentDir.children.find(c => c.name === name);
+        switch (cmd) {
+            case "mkdir":
+                if (!args[0]) return print("usage: mkdir <directory_name>", "error");
+                if (findChild(args[0])) return print(`mkdir: cannot create directory '${args[0]}': File exists`, "error");
+                currentDir.children.push({ name: args[0], type: "dir", children: [] });
+                break;
+            case "touch":
+                if (!args[0]) return print("usage: touch <file_name>", "error");
+                if (findChild(args[0])) return print(`touch: cannot create file '${args[0]}': File exists`, "error");
+                currentDir.children.push({ name: args[0], type: "file" });
+                break;
+            case "ls":
+                currentDir.children.forEach(c => {
+                    print(`<i class="fa-solid ${c.type==='dir'?'fa-folder':'fa-file'} ${c.type}"></i> ${c.name}`);
+                });
+                break;
+            case "cd":
+                if (!args[0] || args[0] === '/') { pathStack = [fs]; currentDir = fs; break; }
+                if (args[0] === "..") {
+                    if (pathStack.length > 1) { pathStack.pop(); currentDir = pathStack[pathStack.length - 1]; }
+                } else {
+                    const dir = findChild(args[0]);
+                    if (!dir || dir.type !== "dir") return print(`cd: no such directory: ${args[0]}`, "error");
+                    pathStack.push(dir);
+                    currentDir = dir;
+                }
+                break;
+            case "rm":
+                if (!args[0]) return print("usage: rm <file_or_dir>", "error");
+                const index = currentDir.children.findIndex(c => c.name === args[0]);
+                if (index === -1) return print(`rm: cannot remove '${args[0]}': No such file or directory`, "error");
+                currentDir.children.splice(index, 1);
+                break;
+            case "help":
+                print(`Available Commands:
+<i class="fa-solid fa-folder-plus help-icon"></i> mkdir    Create directory
+<i class="fa-solid fa-file-circle-plus help-icon"></i> touch <file>   Create file
+<i class="fa-solid fa-trash-can help-icon"></i> rm <name>      Remove file/directory
+<i class="fa-solid fa-list-ul help-icon"></i> ls             List contents
+<i class="fa-solid fa-right-to-bracket help-icon"></i> cd       Change directory
+<i class="fa-solid fa-tree help-icon"></i> tree           Display structure
+<i class="fa-solid fa-broom help-icon"></i> clear          Clear terminal`);
+                break;
+            case "tree":
+                const drawTree = (node, prefix = "") => {
+                    print(`${prefix}<i class="fa-solid ${node.type === 'dir' ? 'fa-folder' : 'fa-file'} ${node.type}"></i> ${node.name}`);
+                    if (node.children) {
+                        node.children.forEach(child => drawTree(child, prefix + "  "));
+                    }
+                }
+                drawTree(fs);
+                break;
+            case "clear":
+                terminal.querySelectorAll("div:not(.terminal-input-area)").forEach(el => el.remove());
+                break;
+            default:
+                print(`command not found: ${cmd}`, "error");
+        }
+    }
+
+    // Initial load
+    print("Welcome to the Virtual File System. Type 'help' for a list of commands.");
+    createPrompt();
+</script>
+</body>
+</html>

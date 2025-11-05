@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>OS Algo Visualizer – Memory Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    /* Keyframe animations */
+    @keyframes aurora { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Universal styles and resets */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      color: #e5e7eb;
+      background-color: #111827;
+      background-image: radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 1) 0px, transparent 0%), radial-gradient(at 97% 21%, hsla(125, 98%, 72%, 1) 0px, transparent 50%);
+      background-size: 200% 200%;
+      animation: aurora 15s ease infinite;
+      padding: 1.5rem;
+    }
+
+    .glass-card {
+      background: rgba(17, 24, 39, 0.6);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.125);
+      border-radius: 16px;
+      padding: 1.5rem;
+      animation: fadeInUp 0.5s ease-out forwards;
+    }
+
+    /* --- Page Layout --- */
+    .page-container { max-width: 1200px; margin: auto; }
+    
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      animation: fadeInUp 0.3s ease-out forwards;
+    }
+    
+    .page-header h1 { font-size: 2rem; color: #fff; margin: 0; }
+    .back-link { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; text-decoration: none; border-radius: 8px; transition: all 0.2s ease; }
+    .back-link:hover { background: rgba(255, 255, 255, 0.2); }
+
+    .config-card { animation-delay: 0.4s; margin-bottom: 1.5rem; }
+    .results-card { animation-delay: 0.5s; }
+
+    h2 { color: #fff; margin-top: 0; padding-bottom: 0.75rem; margin-bottom: 1rem; font-size: 1.25rem; }
+
+    /* --- Controls & Inputs --- */
+    .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; align-items: end;}
+    .control-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    label { font-size: 0.9rem; font-weight: 500; color: #d1d5db; }
+    input, select {
+      font-family: 'Poppins', sans-serif; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 0.95rem; background-color: rgba(255, 255, 255, 0.05); color: #fff; width: 100%;
+    }
+    select option { background-color: #1f2937; }
+    .button-group { display: flex; gap: 0.5rem; }
+    button {
+        background: #4f46e5; color: white; border: none; border-radius: 8px; padding: 0.75rem;
+        cursor: pointer; transition: all 0.2s; font-weight: 600; width: 100%;
+        display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    }
+    button:hover { background-color: #4338ca; }
+    button.reset { background-color: #ef4444; }
+    button.reset:hover { background-color: #dc2626; }
+    
+    /* Algorithm Description Box */
+    .algo-description {
+      margin-top: 0.75rem; padding: 0.75rem; font-size: 0.85rem; color: #d1d5db;
+      background: rgba(0,0,0,0.2); border-radius: 6px; min-height: 50px;
+    }
+
+    /* --- Results Display --- */
+    .memory-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .memory-block {
+      background: rgba(0,0,0,0.2); border-radius: 8px; padding: 1rem;
+      border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column;
+    }
+    .block-header { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 0.5rem; }
+    .block-visual { flex-grow: 1; background: rgba(0,0,0,0.2); border-radius: 4px; display: flex; align-items: flex-end; min-height: 80px; }
+    .block-filled { width: 100%; border-radius: 4px; transition: height 0.5s ease; }
+    .block-info { font-size: 0.8rem; margin-top: 0.75rem; line-height: 1.4; color: #d1d5db; }
+    .block-info span { color: #fff; font-weight: 600; }
+    .unallocated-processes { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .process-pill { background: #ef4444; padding: 0.25rem 0.75rem; border-radius: 99px; font-weight: 600; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <header class="page-header">
+      <h1>Memory Management</h1>
+      <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Home</a>
+    </header>
+
+    <div class="config-card glass-card">
+      <h2>Configuration</h2>
+      <div class="controls-grid">
+        <div class="control-group">
+          <label for="blocks">Block Sizes (e.g., 100, 500, 200)</label>
+          <input type="text" id="blocks" value="100, 500, 200, 300, 600">
+        </div>
+        <div class="control-group">
+          <label for="processes">Process Sizes (e.g., 212, 417)</label>
+          <input type="text" id="processes" value="212, 417, 112, 426">
+        </div>
+        <div class="control-group">
+          <label for="memoryAlgo">Algorithm</label>
+          <select id="memoryAlgo" onchange="updateAlgoDescription()">
+            <option value="firstFit">First Fit</option>
+            <option value="bestFit">Best Fit</option>
+            <option value="worstFit">Worst Fit</option>
+          </select>
+        </div>
+        <div class="control-group">
+            <label> </label>
+            <div class="button-group">
+                <button onclick="allocateMemory()"><i class="fa-solid fa-bolt"></i> Allocate</button>
+                <button class="reset" onclick="resetMemory()"><i class="fa-solid fa-undo"></i> Reset</button>
+            </div>
+        </div>
+      </div>
+      <div class="algo-description" id="algoDescription"></div>
+    </div>
+    
+    <div class="results-card glass-card">
+        <h2>Memory Layout</h2>
+        <div id="memory-container" class="memory-container"></div>
+        <h2>Unallocated Processes</h2>
+        <div id="unallocated-processes" class="unallocated-processes"></div>
+    </div>
+  </div>
+
+<script>
+    const algoData = {
+        firstFit: "Allocates the process to the first memory block that is large enough. It's fast but can lead to fragmentation.",
+        bestFit: "Allocates the process to the smallest memory block that is large enough, minimizing wasted space (internal fragmentation).",
+        worstFit: "Allocates the process to the largest available memory block, aiming to leave a large, useful hole for future processes."
+    };
+
+    function updateAlgoDescription() {
+        const algo = document.getElementById("memoryAlgo").value;
+        document.getElementById("algoDescription").textContent = algoData[algo];
+    }
+
+    function allocateMemory() {
+        const blocksStr = document.getElementById("blocks").value;
+        const procsStr = document.getElementById("processes").value;
+        
+        const blocks = blocksStr.split(',').map(Number).filter(n => !isNaN(n) && n > 0);
+        const procs = procsStr.split(',').map(Number).filter(n => !isNaN(n) && n > 0);
+        
+        if (blocks.length === 0 || procs.length === 0) {
+            alert("Please enter valid, comma-separated numbers for blocks and processes.");
+            return;
+        }
+
+        const algo = document.getElementById("memoryAlgo").value;
+        const blockStatus = blocks.map(size => ({ size, processId: null, processSize: 0 }));
+        const unallocatedProcs = [];
+
+        procs.forEach((pSize, pIdx) => {
+            let choice = -1;
+            if (algo === 'firstFit') {
+                choice = blockStatus.findIndex(b => !b.processId && b.size >= pSize);
+            } else {
+                let suitableBlocks = [];
+                blockStatus.forEach((b, bIdx) => {
+                    if (!b.processId && b.size >= pSize) suitableBlocks.push({ index: bIdx, size: b.size });
+                });
+
+                if (suitableBlocks.length > 0) {
+                    if (algo === 'bestFit') suitableBlocks.sort((a,b) => a.size - b.size);
+                    else if (algo === 'worstFit') suitableBlocks.sort((a,b) => b.size - a.size);
+                    choice = suitableBlocks[0].index;
+                }
+            }
+
+            if (choice !== -1) {
+                blockStatus[choice].processId = `P${pIdx+1}`;
+                blockStatus[choice].processSize = pSize;
+            } else {
+                unallocatedProcs.push({id: `P${pIdx+1}`, size: pSize});
+            }
+        });
+        
+        renderMemory(blockStatus, unallocatedProcs);
+    }
+
+    function renderMemory(blockStatus, unallocatedProcs) {
+        const container = document.getElementById("memory-container");
+        container.innerHTML = "";
+        
+        blockStatus.forEach((block, index) => {
+            const hue = (index * 60) % 360;
+            const color = `hsl(${hue}, 50%, 45%)`;
+            const frag = block.size - block.processSize;
+            const fillHeight = block.processId ? (block.processSize / block.size) * 100 : 0;
+
+            const blockDiv = document.createElement("div");
+            blockDiv.className = "memory-block";
+            blockDiv.innerHTML = `
+                <div class="block-header">
+                    <span>Block ${index + 1}</span>
+                    <span>${block.size}K</span>
+                </div>
+                <div class="block-visual">
+                    <div class="block-filled" style="height: ${fillHeight}%; background-color: ${color};"></div>
+                </div>
+                <div class="block-info">
+                    ${block.processId 
+                        ? `Process: <span>${block.processId} (${block.processSize}K)</span><br>Fragmentation: <span>${frag}K</span>`
+                        : `<span>Free</span>`
+                    }
+                </div>
+            `;
+            container.appendChild(blockDiv);
+        });
+
+        const unallocatedContainer = document.getElementById("unallocated-processes");
+        unallocatedContainer.innerHTML = "";
+        unallocatedProcs.forEach(proc => {
+            const pill = document.createElement("div");
+            pill.className = "process-pill";
+            pill.textContent = `${proc.id} (${proc.size}K)`;
+            unallocatedContainer.appendChild(pill);
+        });
+    }
+
+    function resetMemory() {
+        document.getElementById("memory-container").innerHTML = "";
+        document.getElementById("unallocated-processes").innerHTML = "";
+    }
+
+    // Initial state
+    window.onload = updateAlgoDescription;
+</script>
+</body>
+</html>

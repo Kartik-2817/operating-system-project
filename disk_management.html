@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Disk Scheduling Visualizer</title>
+  
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    /* Keyframe animations */
+    @keyframes aurora { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Universal styles and resets */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      color: #e5e7eb;
+      background-color: #111827;
+      background-image: radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 1) 0px, transparent 0%), radial-gradient(at 97% 21%, hsla(125, 98%, 72%, 1) 0px, transparent 50%), radial-gradient(at 52% 99%, hsla(355, 98%, 76%, 1) 0px, transparent 50%);
+      background-size: 200% 200%;
+      animation: aurora 15s ease infinite;
+      padding: 1.5rem;
+    }
+
+    .glass-card {
+      background: rgba(17, 24, 39, 0.6);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.125);
+      border-radius: 16px;
+      padding: 1.5rem;
+      animation: fadeInUp 0.5s ease-out forwards;
+    }
+
+    /* --- Page Layout --- */
+    .page-container { max-width: 1200px; margin: auto; }
+    
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      animation: fadeInUp 0.3s ease-out forwards;
+    }
+    
+    .page-header h1 { font-size: 2rem; color: #fff; margin: 0; }
+    .back-link { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; text-decoration: none; border-radius: 8px; transition: all 0.2s ease; }
+    .back-link:hover { background: rgba(255, 255, 255, 0.2); }
+
+    .visualizer-grid { display: grid; grid-template-columns: 350px 1fr; gap: 1.5rem; }
+    .config-panel { animation-delay: 0.4s; }
+    .results-panel { animation-delay: 0.5s; }
+
+    h2, h3 { color: #fff; margin-top: 0; padding-bottom: 0.75rem; margin-bottom: 1rem; font-size: 1.25rem; }
+
+    /* --- Controls & Inputs --- */
+    .control-group { margin-bottom: 1.5rem; }
+    label { font-size: 0.9rem; font-weight: 500; color: #d1d5db; display: block; margin-bottom: 0.5rem; }
+    input {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 0.95rem; background-color: rgba(255, 255, 255, 0.05);
+      color: #fff; transition: all 0.2s; width: 100%;
+    }
+    input::placeholder { color: #9ca3af; }
+    input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.4); }
+
+    .button-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    button {
+      background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px; padding: 0.75rem; cursor: pointer; transition: all 0.2s;
+      font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    }
+    button.active, button:hover { background-color: #4f46e5; border-color: #4f46e5; }
+    button.reset { background-color: #ef4444; border-color: #ef4444; grid-column: 1 / -1; }
+    button.reset:hover { background-color: #dc2626; }
+    
+    /* --- Results Panel --- */
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .results-header #algorithmName { font-size: 1.25rem; font-weight: 600; }
+    .results-header #totalMovements { font-size: 2rem; font-weight: 700; color: #818cf8; }
+    
+    canvas {
+      display: block; width: 100%; height: auto;
+      background: rgba(0,0,0,0.2); border-radius: 8px;
+    }
+
+    @media (max-width: 900px) {
+      .visualizer-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <header class="page-header">
+      <h1>Disk Scheduling</h1>
+      <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Home</a>
+    </header>
+
+    <main class="visualizer-grid">
+      <!-- Left Column: Configuration -->
+      <div class="config-panel glass-card">
+        <div class="control-group">
+          <label for="head">Initial Head Position</label>
+          <input type="number" id="head" value="53" />
+        </div>
+        <div class="control-group">
+          <label for="requests">Request Positions (comma-separated)</label>
+          <input type="text" id="requests" value="98, 183, 37, 122, 14, 124, 65, 67" />
+        </div>
+        <div class="control-group">
+          <label for="diskSize">Total Disk Size</label>
+          <input type="number" id="diskSize" value="200" />
+        </div>
+        
+        <div class="control-group">
+          <label>Select Algorithm</label>
+          <div class="button-grid" id="algoButtons">
+            <button data-algo="fcfs">FCFS</button>
+            <button data-algo="sstf">SSTF</button>
+            <button data-algo="scan">SCAN</button>
+            <button data-algo="cscan">C-SCAN</button>
+            <button data-algo="look">LOOK</button>
+            <button data-algo="clook">C-LOOK</button>
+            <button class="reset" onclick="resetVisualization()">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Visualization -->
+      <div class="results-panel glass-card">
+        <div class="results-header">
+          <div id="algorithmName">-</div>
+          <div id="totalMovements">0</div>
+        </div>
+        <canvas id="diskCanvas" width="800" height="400"></canvas>
+      </div>
+    </main>
+  </div>
+
+<script>
+    const canvas = document.getElementById('diskCanvas');
+    const ctx = canvas.getContext('2d');
+    const baseY = 50;
+    const spacingY = 30;
+
+    function parseInput(id) { return document.getElementById(id).value; }
+
+    function validateAndGetData() {
+        const head = parseInt(parseInput('head'));
+        const requests = parseInput('requests').split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+        const diskSize = parseInt(parseInput('diskSize'));
+
+        if (isNaN(head) || head < 0 || isNaN(diskSize) || diskSize <= 0) {
+            alert('Please enter a valid head position and disk size.');
+            return null;
+        }
+        if (requests.length === 0) {
+            alert('Please enter at least one request position.');
+            return null;
+        }
+        return { head, requests, diskSize };
+    }
+
+    function drawDisk(sequence, diskSize) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const scale = canvas.width / diskSize;
+        
+        // Draw disk track line
+        ctx.beginPath();
+        ctx.moveTo(0, baseY - 10);
+        ctx.lineTo(canvas.width, baseY - 10);
+        ctx.strokeStyle = "rgba(255,255,255,0.2)";
+        ctx.stroke();
+
+        // Animate the head movement
+        let i = 0;
+        function animateLine() {
+            if (i >= sequence.length - 1) return;
+            
+            const startX = sequence[i] * scale;
+            const startY = baseY + i * spacingY;
+            const endX = sequence[i+1] * scale;
+            const endY = baseY + (i + 1) * spacingY;
+
+            // Draw line
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.strokeStyle = "#a78bfa";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw start and end points
+            [startX, endX].forEach((x, idx) => {
+                const y = idx === 0 ? startY : endY;
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = i === 0 && idx === 0 ? "#4f46e5" : "#818cf8"; // Highlight initial head
+                ctx.fill();
+                ctx.fillStyle = "#fff";
+                ctx.fillText(idx === 0 ? sequence[i] : sequence[i+1], x + 8, y + 4);
+            });
+            
+            i++;
+            setTimeout(animateLine, 300);
+        }
+        animateLine();
+    }
+    
+    // --- ALGORITHM LOGIC ---
+    function getSequence(algo, { head, requests, diskSize }) {
+        const left = requests.filter(r => r < head).sort((a,b) => b-a);
+        const right = requests.filter(r => r >= head).sort((a,b) => a-b);
+        let sortedLeft = [...left].sort((a,b) => a-b);
+        
+        switch(algo) {
+            case 'fcfs': return [head, ...requests];
+            case 'sstf':
+                let seq = [head], current = head, unserviced = [...requests];
+                while(unserviced.length > 0) {
+                    unserviced.sort((a,b) => Math.abs(a-current) - Math.abs(b-current));
+                    current = unserviced.shift();
+                    seq.push(current);
+                }
+                return seq;
+            case 'scan': return [head, ...right, diskSize-1, ...left];
+            case 'cscan': return [head, ...right, diskSize-1, 0, ...sortedLeft];
+            case 'look': return [head, ...right, ...left];
+            case 'clook': return [head, ...right, ...sortedLeft];
+            default: return [];
+        }
+    }
+
+    function runAlgorithm(algo) {
+        const data = validateAndGetData();
+        if (!data) return;
+
+        const sequence = getSequence(algo, data);
+        const totalMovements = sequence.slice(1).reduce((sum, val, i) => sum + Math.abs(val - sequence[i]), 0);
+        
+        drawDisk(sequence, data.diskSize);
+        
+        document.getElementById('algorithmName').textContent = algo.toUpperCase();
+        document.getElementById('totalMovements').textContent = totalMovements;
+
+        // Update active button
+        document.querySelectorAll('#algoButtons button').forEach(b => {
+            b.classList.toggle('active', b.dataset.algo === algo);
+        });
+    }
+
+    function resetVisualization() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        document.getElementById('algorithmName').textContent = '-';
+        document.getElementById('totalMovements').textContent = '0';
+        document.querySelectorAll('#algoButtons button').forEach(b => b.classList.remove('active'));
+    }
+    
+    // Event listeners for buttons
+    document.querySelectorAll('#algoButtons button[data-algo]').forEach(button => {
+        button.addEventListener('click', () => runAlgorithm(button.dataset.algo));
+    });
+    
+    // Initial state
+    resetVisualization();
+</script>
+</body>
+</html>
