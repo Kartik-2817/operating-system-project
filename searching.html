@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Search Algorithms Visualizer</title>
+<!-- Include fonts and icons -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #111827;
+    margin: 0;
+    padding: 2rem;
+    color: #e5e7eb;
+    background-image: radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 1) 0px, transparent 0%), 
+                      radial-gradient(at 97% 21%, hsla(125, 98%, 72%, 1) 0px, transparent 50%), 
+                      radial-gradient(at 52% 99%, hsla(355, 98%, 76%, 1) 0px, transparent 50%);
+    background-size: 200% 200%;
+    animation: aurora 15s ease infinite;
+  }
+
+  @keyframes aurora { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+
+  .page-container {
+    max-width: 1100px;
+    margin: auto;
+  }
+
+  .glass-card {
+    background: rgba(17, 24, 39, 0.6);
+    backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.125);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+  }
+
+  .controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  input, select, button {
+    font-family: 'Poppins', sans-serif;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background-color: rgba(255,255,255,0.05);
+    color: #fff;
+    width: 100%;
+  }
+
+  button {
+    background: #3b82f6;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    transition: background 0.2s ease;
+  }
+  button:hover { background: #2563eb; }
+
+  #arrayWrapper {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 200px;
+    margin-top: 20px;
+    width: 100%;
+    padding: 0 20px;
+  }
+
+  #arrayContainer {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+  }
+
+  /* Improved bar style for clarity and theme */
+  .cell {
+    width: 30px;
+    height: 0; /* height will be set dynamically */
+    min-height: 10px;
+    border-radius: 4px;
+    background: #60a5fa;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  /* Highlight for current comparison */
+  .highlight {
+    box-shadow: 0 0 12px 4px #facc15;
+    border: 2px solid #facc15;
+  }
+
+  /* Found element highlight */
+  .found {
+    box-shadow: 0 0 14px 4px #22c55e;
+    border: 2px solid #22c55e;
+  }
+
+  /* Labels for low, mid, high */
+  .labels-container {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: #ccc;
+  }
+
+  /* Indicators for low, mid, high with background */
+  .indicators {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 4px;
+  }
+  .indicator-box {
+    padding: 4px 8px;
+    background-color: rgba(255,255,255,0.2);
+    border-radius: 4px;
+  }
+
+  #explanation {
+    margin-top: 20px;
+    font-size: 1.2rem;
+  }
+
+  /* Buttons for control */
+  .buttons-group {
+    margin-top: 10px;
+  }
+  .buttons-group button {
+    padding: 0.75rem 1.2rem;
+    margin-right: 10px;
+  }
+  .back-link { display: inline-flex; align-items: center;margin: 3px; gap: 0.5rem; padding: 0.6rem 1rem; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; text-decoration: none; border-radius: 8px; font-weight: 500; transition: all 0.2s ease; }
+  .back-link:hover { background: rgba(255, 255, 255, 0.2); }
+</style>
+</head>
+<body>
+
+<div class="page-container">
+  <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Home</a>
+  <div class="glass-card">
+    <h2>Search Algorithm Visualization</h2>
+    <div class="controls-grid">
+      <div>
+        <label>Array Size</label>
+        <input type="number" id="arraySize" value="20" min="5" max="50" />
+        <button onclick="generateArray()">Generate Array</button>
+      </div>
+      <div>
+        <label>Algorithm</label>
+        <select id="algorithm" onchange="updateAlgorithmInfo()">
+          <option>Linear Search</option>
+          <option>Binary Search</option>
+        </select>
+        <div id="algoDescription" style="margin-top:8px; font-size:0.9rem; color:#ccc;"></div>
+        <div id="timeComplexity" style="margin-top:4px; font-size:0.85rem; color:#aaa;"></div>
+      </div>
+      <div>
+        <label>Target Value</label>
+        <input type="number" id="targetInput" placeholder="Enter target" />
+        <button onclick="startSearch()">Start Search</button>
+      </div>
+      <!-- Add Pause Button -->
+      <div>
+        <label>Control</label>
+        <button id="pauseBtn" onclick="togglePauseResume()">Pause</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="glass-card" style="position: relative;">
+    <h2>Array Visualization</h2>
+    <div id="arrayWrapper" style="position: relative;">
+      <div id="arrayContainer"></div>
+    </div>
+    <!-- Labels for low, mid, high -->
+    <div class="labels-container">
+      <div>Low</div>
+      <div>Mid</div>
+      <div>High</div>
+    </div>
+    <!-- Current low, mid, high values -->
+    <div class="indicators">
+      <div class="indicator-box" id="lowLabel"></div>
+      <div class="indicator-box" id="midLabel"></div>
+      <div class="indicator-box" id="highLabel"></div>
+    </div>
+    <!-- Navigation buttons -->
+    <div class="buttons-group" style="margin-top:10px;">
+      <button onclick="prevStep()">Prev</button>
+      <button onclick="nextStep()">Next</button>
+    </div>
+    <div id="explanation"></div>
+  </div>
+
+</div>
+
+<script>
+let array = [];
+let steps = [];
+let currentStep = 0;
+let isRunning = false;
+let isPaused = false;
+
+// Algorithm details
+const algoDetails = {
+  "Linear Search": {
+    description: "Checks each element sequentially until target is found.",
+    timeComplexity: "O(n)"
+  },
+  "Binary Search": {
+    description: "Repeatedly divides sorted array to find target.",
+    timeComplexity: "O(log n)"
+  }
+};
+
+function generateArray() {
+  const size = +document.getElementById("arraySize").value;
+  array = Array.from({length: size}, () => Math.floor(Math.random() * 150) + 10);
+  array.sort((a, b) => a - b);
+  steps = [];
+  currentStep = 0;
+  document.getElementById("explanation").innerText = "Array generated. Enter target & start search.";
+  updateAlgorithmInfo();
+  renderArray();
+  resetRangeIndicator();
+  updateLowMidHighLabels(null, null, null);
+  document.getElementById('pauseBtn').innerText='Pause'; // Reset pause button text
+}
+
+function updateAlgorithmInfo() {
+  const algo = document.getElementById("algorithm").value;
+  document.getElementById("algoDescription").innerText = algoDetails[algo].description;
+  document.getElementById("timeComplexity").innerText = "Time: " + algoDetails[algo].timeComplexity;
+}
+
+function renderArray(highlightIndices = [], foundIndex = null) {
+  const container = document.getElementById("arrayContainer");
+  container.innerHTML = "";
+  array.forEach((val, i) => {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.style.height = (val * 1.2) + "px"; // scale height for better visibility
+    if (highlightIndices.includes(i)) cell.classList.add("highlight");
+    if (foundIndex !== null && i === foundIndex) cell.classList.add("found");
+    cell.innerText = val;
+    container.appendChild(cell);
+  });
+}
+
+function resetRangeIndicator() {
+  const indicator = document.getElementById("rangeIndicator");
+  if (indicator) {
+    indicator.style.width = "100%";
+    indicator.style.left = "0%";
+  }
+}
+
+function updateRangeIndicator(low, high) {
+  const indicator = document.getElementById("rangeIndicator");
+  const container = document.getElementById("arrayWrapper");
+  if (indicator && container) {
+    const totalWidth = container.offsetWidth;
+    const leftPercent = (low !== null ? (low / array.length) * 100 : 0);
+    const rightPercent = (high !== null ? ((high + 1) / array.length) * 100 : 100);
+    indicator.style.left = leftPercent + "%";
+    indicator.style.width = (rightPercent - leftPercent) + "%";
+  }
+}
+
+function updateLowMidHighLabels(low, mid, high) {
+  document.getElementById('lowLabel').innerText = (low !== null) ? low : '-';
+  document.getElementById('midLabel').innerText = (mid !== null) ? mid : '-';
+  document.getElementById('highLabel').innerText = (high !== null) ? high : '-';
+
+  // Reset label colors
+  document.querySelectorAll('.indicator-box').forEach(box => box.style.backgroundColor='rgba(255,255,255,0.2)');
+  
+  if (low !== null) document.getElementById('lowLabel').style.backgroundColor='rgba(255,255,255,0.4)';
+  if (mid !== null) document.getElementById('midLabel').style.backgroundColor='rgba(255,255,255,0.4)';
+  if (high !== null) document.getElementById('highLabel').style.backgroundColor='rgba(255,255,255,0.4)';
+}
+
+async function prepareSteps() {
+  steps = [];
+  const targetVal = +document.getElementById("targetInput").value;
+  const algo = document.getElementById("algorithm").value;
+  if (isNaN(targetVal)) {
+    alert("Enter a valid target");
+    return;
+  }
+  if (algo === "Linear Search") {
+    for (let i=0; i<array.length; i++) {
+      steps.push({type:'check', index:i});
+      if (array[i]===targetVal) {
+        steps.push({type:'found', index:i});
+        return;
+      }
+    }
+  } else if (algo === "Binary Search") {
+    let low=0, high=array.length-1;
+    while (low<=high) {
+      const mid = Math.floor((low+high)/2);
+      steps.push({type:'check', index:mid, low, high, mid});
+      if (array[mid]===targetVal) {
+        steps.push({type:'found', index:mid, low, high, mid});
+        return;
+      } else if (array[mid]<targetVal) {
+        low= mid+1;
+      } else {
+        high= mid-1;
+      }
+    }
+  }
+}
+
+async function runSteps() {
+  isRunning = true;
+  for (let i=0; i<steps.length; i++) {
+    if (isPaused) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      i--; // stay on the same step until resumed
+      continue;
+    }
+    const step=steps[i];
+    if (!step) continue; // safeguard if step is undefined
+
+    // Safely access low, mid, high
+    const low = step.low !== undefined ? step.low : null;
+    const mid = step.mid !== undefined ? step.mid : null;
+    const high = step.high !== undefined ? step.high : null;
+
+    executeStep(i, low, mid, high);
+    await new Promise(r => setTimeout(r, 700));
+  }
+  if (!steps.some(s => s.type==='found')) {
+    document.getElementById("explanation").innerText = "Target not found.";
+  }
+  isRunning=false;
+}
+
+function executeStep(index, low, mid, high) {
+  const step = steps[index];
+  if (!step) return;
+  if (step.type==='check') {
+    renderArray([], step.index);
+    updateRangeIndicator(low, high);
+    updateLowMidHighLabels(low, mid, high);
+    document.getElementById("explanation").innerText = `Checking index ${step.index + 1} (${array[step.index]})`;
+  } else if (step.type==='found') {
+    renderArray([step.index], step.index);
+    updateRangeIndicator(low, high);
+    updateLowMidHighLabels(low, mid, high);
+    document.getElementById("explanation").innerText = `Target found at index ${step.index + 1}`;
+  }
+}
+
+function startSearch() {
+  if (isRunning) return;
+  prepareSteps().then(runSteps);
+}
+
+function prevStep() {
+  if (currentStep > 0 && !isRunning) {
+    currentStep--;
+    executeStep(currentStep);
+  }
+}
+
+function nextStep() {
+  if (currentStep < steps.length && !isRunning) {
+    executeStep(currentStep);
+    currentStep++;
+  }
+}
+
+// Toggle pause/resume
+function togglePauseResume() {
+  isPaused = !isPaused;
+  document.getElementById('pauseBtn').innerText = isPaused ? 'Resume' : 'Pause';
+}
+
+// Initialize array on page load
+generateArray();
+updateAlgorithmInfo();
+
+</script>
+</body>
+</html>

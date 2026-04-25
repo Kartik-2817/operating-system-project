@@ -12,7 +12,7 @@
   
   <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <style>
     /* Keyframe animations for entrance and hover effects */
     @keyframes aurora {
@@ -173,13 +173,17 @@
       h1 { font-size: 2.2rem; }
       .container { padding: 2rem; }
     }
+ 
+  
+
+
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>OS Algorithm Visualizer</h1>
+    <h1> Algorithm Visualizer</h1>
     <p class="subtitle">
-      Explore and understand key Operating System concepts interactively.
+      Explore and understand key Operating System , Data structure concepts interactively.
     </p>
     <nav class="nav-grid">
       <a href="cpu_scheduling.html">
@@ -198,7 +202,24 @@
         <i class="fa-solid fa-folder-tree"></i>
         <span>Virtual File System</span>
       </a>
+      <a href="sorting.html">
+        <i class="fa-solid fa-hard-drive"></i>
+        <span>Sorting algorithms</span>
+      </a>
+      <a href="searching.html">
+        <i class="fa-solid fa-hard-drive"></i>
+        <span>Searching</span>
+      </a>
     </nav>
   </div>
+
+  <script>
+    const pageTopic = "CPU Scheduling"; // set specific topic
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+  
 </body>
+
+
 </html>
